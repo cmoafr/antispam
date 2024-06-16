@@ -2,6 +2,8 @@ import os
 import discord
 from dotenv import load_dotenv
 
+from logger import logger, setup_logger
+
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -11,7 +13,7 @@ bot = discord.Client(intents=intents)
 
 @bot.event
 async def on_ready():
-    print(f'Logged in as {bot.user}')
+    logger.info(f'Logged in as {bot.user}')
 
 @bot.event
 async def on_message(message: discord.Message):
@@ -24,11 +26,12 @@ async def on_message(message: discord.Message):
 
 
 def main() -> None:
+    setup_logger()
     load_dotenv()
     token = os.getenv('TOKEN')
     if not token:
         raise ValueError('Discord not found in environment')
-    bot.run(token)
+    bot.run(token, log_handler=None)
 
 if __name__ == "__main__":
     main()

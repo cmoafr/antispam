@@ -161,3 +161,6 @@ cython_debug/
 
 # Script output
 nohup.out
+
+# Log files
+logs/
