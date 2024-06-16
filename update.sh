@@ -9,8 +9,7 @@ pip install -r requirements.txt
 
 # Restart the bot
 pkill -TERM python3
-nohup python3 main.py &
+screen -dmS antispam python3 main.py
 
-# Detach and disconnect
-disown
+# Disconnect
 exit
