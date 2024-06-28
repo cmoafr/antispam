@@ -8,7 +8,9 @@ source .venv/bin/activate
 pip install -r requirements.txt
 
 # Restart the bot
+set +e
 pkill -TERM python3
+set -e
 screen -dmS antispam python3 main.py
 
 # Disconnect
