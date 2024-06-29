@@ -1,3 +1,4 @@
+import os
 import discord
 from discord.ext import commands
 
@@ -14,6 +15,14 @@ class SpamDetector(commands.Cog):
         super().__init__()
         self.bot = bot
         self.history: list[discord.Message] = []
+        try:
+            self.trap_channels = [
+                int(id)
+                for id in os.getenv('TRAP_CHANNELS', '').split(',')
+                if id
+            ]
+        except ValueError:
+            self.trap_channels = []
 
     @commands.Cog.listener()
     async def on_ready(self) -> None:
@@ -21,15 +30,11 @@ class SpamDetector(commands.Cog):
     
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if message.author.bot or isinstance(message.author, discord.User):
+        if message.author.bot:
             return
         
         if self._is_spam(message):
-            try:
-                await message.author.timeout(None, reason="Spam")
-                await self._cleanup_messages(message)
-            except discord.Forbidden:
-                logger.error(f"Missing permissions to timeout {message.author}")
+            await self._timeout(message)
 
         # Update history
         self.history.append(message)
@@ -40,6 +45,10 @@ class SpamDetector(commands.Cog):
             self.history.pop(0)
 
     def _is_spam(self, message: discord.Message) -> bool:
+        # Trap channel
+        if message.channel.id in self.trap_channels:
+            return True
+
         # Common message filters
         from_author = [msg for msg in self.history if msg.author.id == message.author.id]
         same_content = [msg for msg in from_author if msg.content == message.content]
@@ -63,6 +72,14 @@ class SpamDetector(commands.Cog):
             return True
         
         return False
+    
+    async def _timeout(self, message: discord.Message):
+        try:
+            if isinstance(message.author, discord.Member):
+                await message.author.timeout(None, reason="Spam")
+            await self._cleanup_messages(message)
+        except discord.Forbidden:
+            logger.error(f"Missing permissions to timeout {message.author}")
     
     async def _cleanup_messages(self, original_message: discord.Message):
         if original_message.guild is None:
