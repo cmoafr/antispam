@@ -48,3 +48,12 @@ class Admin(commands.Cog):
 
         except subprocess.SubprocessError as e:
             await channel.send(f"`{e.__class__.__name__}: {e}`")
+    
+    @restart.error
+    async def restart_error(self, context: discord.Interaction, error: app_commands.AppCommandError):
+        if isinstance(error, app_commands.CheckFailure):
+            if admin_id:
+                message = f"Only <@{admin_id}> is allowed to use this command."
+            else:
+                message = "You are not allowed to use this command."
+            await context.response.send_message(message, ephemeral=True)
