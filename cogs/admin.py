@@ -37,6 +37,14 @@ class Admin(commands.Cog):
         await context.response.send_message("Restarting...")
 
         try:
-            subprocess.run("bash -e update.sh", check=True)
-        except Exception as e:
-            await channel.send(f"`{e.__class__.__name__}: {e!s}`")
+            process = subprocess.run(
+                "bash -e update.sh",
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+
+            if process.returncode:
+                await channel.send(f"Failure:\n```{process.stderr.decode()}```")
+
+        except subprocess.SubprocessError as e:
+            await channel.send(f"`{e.__class__.__name__}: {e}`")
