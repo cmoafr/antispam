@@ -1,5 +1,5 @@
 import os
-import subprocess
+import asyncio
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -37,16 +37,17 @@ class Admin(commands.Cog):
         await context.response.send_message("Restarting...")
 
         try:
-            process = subprocess.run(
-                "bash -e update.sh",
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
+            process = await asyncio.create_subprocess_exec(
+                "bash", "-e", "update.sh",
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
             )
+            _, stderr = await process.communicate()
 
             if process.returncode:
-                await channel.send(f"Failure:\n```{process.stderr.decode()}```")
+                await channel.send(f"Failure:\n```{stderr.decode()}```")
 
-        except subprocess.SubprocessError as e:
+        except Exception as e:
             await channel.send(f"`{e.__class__.__name__}: {e}`")
     
     @restart.error
