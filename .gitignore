@@ -159,8 +159,15 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
+
+
+
+
 # Script output
 nohup.out
 
 # Log files
 logs/
+
+# Private cogs (specific to each instance)
+cogs/_*.py
