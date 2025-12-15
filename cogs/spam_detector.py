@@ -1,3 +1,5 @@
+import asyncio
+import datetime
 import os
 import discord
 from discord.ext import commands
@@ -10,6 +12,7 @@ async def setup(bot: commands.Bot) -> None:
 
 class SpamDetector(commands.Cog):
     GC_AFTER = 25 # Remove messages from history if they are more than X seconds old
+    TIMEOUT_DURATION = datetime.timedelta(days=7)
 
     def __init__(self, bot: commands.Bot) -> None:
         super().__init__()
@@ -74,17 +77,22 @@ class SpamDetector(commands.Cog):
         return False
     
     async def _timeout(self, message: discord.Message):
+        logger.debug(f"Spam from {message.author.mention} in {message.channel.jump_url}")
+        logger.debug(message.content[:1800])
+        
         try:
             if isinstance(message.author, discord.Member):
-                await message.author.timeout(None, reason="Spam")
+                await message.author.timeout(self.TIMEOUT_DURATION, reason="Spam")
             await self._cleanup_messages(message)
-        except discord.Forbidden:
-            logger.error(f"Missing permissions to timeout {message.author}")
+        except discord.Forbidden as e:
+            logger.error(f"Missing permissions to timeout {message.author.mention}")
+            logger.error(e, exc_info=True)
     
     async def _cleanup_messages(self, original_message: discord.Message):
         if original_message.guild is None:
             return
 
+        await asyncio.sleep(1) # Ensure message has been posted
         for msg in self.history:
             # Must be from this person
             if msg.author.id != original_message.author.id:
